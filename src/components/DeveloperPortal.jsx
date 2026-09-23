@@ -8,12 +8,14 @@ import {
   CheckCircle2,
   Sparkles,
   Upload,
+  ArrowRight,
+  Zap,
+  RefreshCw,
   Layers,
-  ArrowRight
+  Gamepad2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audio';
-
 import { submissionsApi } from '../services/api';
 
 export default function DeveloperPortal({ onBackToHome, categories = [] }) {
@@ -36,7 +38,9 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
     engine: 'HTML5 / WebGL'
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [extractedNotice, setExtractedNotice] = useState('');
+  const [ticketId, setTicketId] = useState('');
 
   const handleGameUrlChange = (val) => {
     let clean = val;
@@ -80,7 +84,11 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
       return;
     }
 
+    setSubmitting(true);
     sounds.playPowerup();
+    const randomId = `THOP-${Math.floor(10000 + Math.random() * 90000)}`;
+    setTicketId(randomId);
+
     try {
       await submissionsApi.submitGame({
         developerName: formData.name,
@@ -93,21 +101,26 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
       });
     } catch (err) {
       console.warn('API submission offline:', err);
+    } finally {
+      setSubmitting(false);
+      setSubmitted(true);
+      confetti({
+        particleCount: 80,
+        spread: 90,
+        origin: { y: 0.6 }
+      });
     }
-    setSubmitted(true);
-    confetti({
-      particleCount: 70,
-      spread: 80,
-      origin: { y: 0.6 }
-    });
   };
+
+
 
   return (
     <div className="dev-portal-page">
       {/* Dev Hero */}
       <div className="dev-hero-section">
         <div className="dev-hero-badge">
-          <Code2 size={16} /> FOR GAME DEVELOPERS & STUDIOS
+          <Code2 size={15} />
+          <span>FOR GAME DEVELOPERS & STUDIOS</span>
         </div>
         <h1 className="dev-hero-title">
           Publish Your Games to <span className="gradient-highlight">Millions of Players</span>
@@ -142,36 +155,95 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
 
       {/* Submission Form & Benefits */}
       <div className="dev-form-grid">
+        {/* Left Container */}
         <div className="dev-form-container">
           <div className="form-card-header">
-            <Rocket size={22} color="#f52d3a" />
-            <h2>Submit Your Game</h2>
+            <div className="form-card-icon-box">
+              <Rocket size={20} color="#f52d3a" />
+            </div>
+            <div>
+              <h2>Submit Your Game</h2>
+              <p className="form-card-sub">Direct developer publishing pipeline with 24-hour review SLA</p>
+            </div>
           </div>
 
           {submitted ? (
-            <div className="form-success-state">
-              <CheckCircle2 size={54} color="#00f5a0" />
-              <h3>Submission Received!</h3>
-              <p>
-                Thank you for submitting <strong>{formData.gameTitle}</strong>! Our publishing team will review your game build within 24 hours and contact you at <strong>{formData.email}</strong>.
+            <div className="dev-success-box">
+              <div className="dev-success-icon-wrap">
+                <CheckCircle2 size={46} strokeWidth={2.5} />
+              </div>
+
+              <div className="dev-ticket-badge">
+                <Sparkles size={13} />
+                <span>Ticket #{ticketId || 'THOP-84920'} • Received</span>
+              </div>
+
+              <h2 className="dev-success-heading">Submission Received!</h2>
+              <p className="dev-success-subtext">
+                Thank you for submitting <strong className="dev-highlight-text">{formData.gameTitle || 'your game'}</strong>! Our publishing team will review your game build within 24 hours and contact you at <strong className="dev-highlight-text">{formData.email}</strong>.
               </p>
-              <button
-                className="neon-play-btn"
-                onClick={() => {
-                  setSubmitted(false);
-                  setFormData({
-                    name: '',
-                    email: '',
-                    gameTitle: '',
-                    gameUrl: '',
-                    category: 'action',
-                    description: '',
-                    engine: 'HTML5 / WebGL'
-                  });
-                }}
-              >
-                Submit Another Game
-              </button>
+
+              {/* Review Timeline */}
+              <div className="dev-review-pipeline">
+                <div className="pipeline-step active">
+                  <div className="pipeline-dot">1</div>
+                  <div className="pipeline-info">
+                    <strong>Build Audit</strong>
+                    <span>Security & sandbox check</span>
+                  </div>
+                </div>
+                <div className="pipeline-step">
+                  <div className="pipeline-dot">2</div>
+                  <div className="pipeline-info">
+                    <strong>Catalog Indexing</strong>
+                    <span>Thumbnails & tags</span>
+                  </div>
+                </div>
+                <div className="pipeline-step">
+                  <div className="pipeline-dot">3</div>
+                  <div className="pipeline-info">
+                    <strong>Global Launch</strong>
+                    <span>Instant player access</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dev-success-actions">
+                <button
+                  type="button"
+                  className="pro-btn-primary"
+                  onClick={() => {
+                    sounds.playClick();
+                    setSubmitted(false);
+                    setFormData({
+                      name: '',
+                      email: '',
+                      gameTitle: '',
+                      gameUrl: '',
+                      category: availableCategories[0]?.id || 'action',
+                      description: '',
+                      engine: 'HTML5 / WebGL'
+                    });
+                  }}
+                >
+                  <RefreshCw size={16} />
+                  <span>Submit Another Game</span>
+                </button>
+
+                {onBackToHome && (
+                  <button
+                    type="button"
+                    className="pro-btn-secondary"
+                    onClick={() => {
+                      sounds.playClick();
+                      onBackToHome();
+                    }}
+                  >
+                    <Gamepad2 size={16} />
+                    <span>Explore Game Catalog</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="game-submit-form">
@@ -235,7 +307,7 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
                   onPaste={handleGameUrlPaste}
                 />
                 {extractedNotice && (
-                  <span style={{ fontSize: '0.8rem', color: '#00f5a0', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                  <span className="extracted-notice-pill">
                     {extractedNotice}
                   </span>
                 )}
@@ -251,8 +323,9 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
                 />
               </div>
 
-              <button type="submit" className="dev-submit-btn">
-                <Upload size={18} /> SUBMIT GAME FOR PUBLISHING
+              <button type="submit" className="dev-submit-btn" disabled={submitting}>
+                <Upload size={18} />
+                <span>{submitting ? 'Submitting Build...' : 'SUBMIT GAME FOR PUBLISHING'}</span>
               </button>
             </form>
           )}
@@ -260,51 +333,57 @@ export default function DeveloperPortal({ onBackToHome, categories = [] }) {
 
         {/* Developer Benefits Checklist */}
         <div className="dev-benefits-card">
-          <h3>Why Partner withThopGames?</h3>
-          <ul className="benefits-list">
-            <li>
-              <CheckCircle2 size={18} color="#00f2fe" />
-              <div>
-                <strong>Zero Hosting Fees:</strong> We host and distribute your game across worldwide high-speed CDNs.
-              </div>
-            </li>
-            <li>
-              <CheckCircle2 size={18} color="#00f2fe" />
-              <div>
-                <strong>Lightweight SDK:</strong> Integrate rewarded ads and banners in under 10 lines of code.
-              </div>
-            </li>
-            <li>
-              <CheckCircle2 size={18} color="#00f2fe" />
-              <div>
-                <strong>Monthly Payouts:</strong> Automated PayPal and Wire transfers with minimum $50 threshold.
-              </div>
-            </li>
-            <li>
-              <CheckCircle2 size={18} color="#00f2fe" />
-              <div>
-                <strong>Featured Spotlight:</strong> High-performing games get guaranteed placement on our homepage hero banner.
-              </div>
-            </li>
-          </ul>
-
-          <div className="sdk-code-preview">
-            <div className="code-header">
-              <span>THOPGAME SDK Quickstart</span>
-            </div>
-            <pre className="code-block">
-              <code>{`// Initialize ThopGame SDK
-window.ThopSDK.init({
-  gameId: 'your-game-id',
-  onReady: () => {
-    console.log('SDK Ready!');
-  }
-});
-
-// Show Interstitial Ad between levels
-window.SkySDK.showAd('level_end');`}</code>
-            </pre>
+          <div className="benefits-card-header">
+            <span className="benefits-pill-tag">DEVELOPER BENEFITS</span>
+            <h3>Why Partner with ThopGames?</h3>
+            <p className="benefits-card-desc">
+              Scale your game globally with frictionless distribution, high-speed edge hosting, and creator-first monetization.
+            </p>
           </div>
+
+          <div className="benefits-items-list">
+            <div className="benefit-item-row">
+              <div className="benefit-icon-badge cyan">
+                <Globe2 size={18} />
+              </div>
+              <div className="benefit-text">
+                <strong>Zero Hosting Fees</strong>
+                <p>We host and distribute your game across worldwide high-speed CDNs with 99.99% uptime.</p>
+              </div>
+            </div>
+
+            <div className="benefit-item-row">
+              <div className="benefit-icon-badge amber">
+                <Zap size={18} />
+              </div>
+              <div className="benefit-text">
+                <strong>Lightweight SDK</strong>
+                <p>Integrate rewarded ads, interstitials, and scoreboards in under 10 lines of clean JavaScript.</p>
+              </div>
+            </div>
+
+            <div className="benefit-item-row">
+              <div className="benefit-icon-badge emerald">
+                <DollarSign size={18} />
+              </div>
+              <div className="benefit-text">
+                <strong>Monthly Payouts (70% Net)</strong>
+                <p>Automated PayPal and Wire transfers with minimum $50 cashout threshold.</p>
+              </div>
+            </div>
+
+            <div className="benefit-item-row">
+              <div className="benefit-icon-badge purple">
+                <Rocket size={18} />
+              </div>
+              <div className="benefit-text">
+                <strong>Featured Spotlight</strong>
+                <p>High-performing games get guaranteed placement on our homepage hero marquee and social streams.</p>
+              </div>
+            </div>
+          </div>
+
+
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import SkyNavbar from './components/SkyNavbar';
 import Sidebar from './components/Sidebar';
 import GameGrid from './components/GameGrid';
 import GamePlayerView from './components/GamePlayerView';
+import Footer from './components/Footer';
 
 import AuthModal from './components/AuthModal';
 import MultiplayerLobbyModal from './components/MultiplayerLobbyModal';
@@ -13,8 +14,12 @@ const DeveloperPortal = lazy(() => import('./components/DeveloperPortal'));
 const AboutPage = lazy(() => import('./components/AboutPage'));
 const ContactPage = lazy(() => import('./components/ContactPage'));
 const PrivacyPage = lazy(() => import('./components/PrivacyPage'));
+const TermsPage = lazy(() => import('./components/TermsPage'));
+const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));
+const BlogPage = lazy(() => import('./components/BlogPage'));
 
 import { GAMES as DEFAULT_STATIC_GAMES, CATEGORIES as DEFAULT_STATIC_CATEGORIES } from './data/games';
+import { filterCategoriesWithGames } from './utils/categoryIcons';
 import { sounds } from './utils/audio';
 import { socket } from './utils/socket';
 import { CONFIG } from './config';
@@ -48,7 +53,7 @@ class ErrorBoundary extends Component {
           textAlign: 'center',
           fontFamily: 'Inter, system-ui, sans-serif'
         }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 12 }}>🎮ThopGames Ready</h2>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 12 }}>ThopGames Ready</h2>
           <p style={{ color: '#94a3b8', maxWidth: 460, marginBottom: 20 }}>
             An unexpected glitch was caught and safely recovered.
           </p>
@@ -137,7 +142,32 @@ function App() {
     return DEFAULT_STATIC_CATEGORIES;
   });
 
+  // Available categories on the website:
+  // Dynamically controlled by Admin, only showing categories with active games in the full library (plus All Games)
+  const availableCategories = useMemo(() => {
+    return filterCategoriesWithGames(categories, games);
+  }, [categories, games]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const sidebarCloseTimeoutRef = useRef(null);
+
+  const handleSidebarMouseEnter = useCallback(() => {
+    if (sidebarCloseTimeoutRef.current) {
+      clearTimeout(sidebarCloseTimeoutRef.current);
+      sidebarCloseTimeoutRef.current = null;
+    }
+    setIsSidebarExpanded(true);
+  }, []);
+
+  const handleSidebarMouseLeave = useCallback(() => {
+    if (sidebarCloseTimeoutRef.current) {
+      clearTimeout(sidebarCloseTimeoutRef.current);
+    }
+    sidebarCloseTimeoutRef.current = setTimeout(() => {
+      setIsSidebarExpanded(false);
+    }, 250); // Smooth grace delay before collapsing back to icons
+  }, []);
 
   const [activePage, setActivePage] = useState(initialNav.page);
   const [activeCategory, setActiveCategory] = useState(initialNav.category);
@@ -310,21 +340,28 @@ function App() {
     };
 
     const handleGameUpdated = (updatedGame) => {
+      if (!updatedGame) return;
+      const targetId = String(updatedGame.id || updatedGame._id || '');
+      if (!targetId) return;
+
       setGames(prev => {
-        const next = prev.map(g => (g.id === updatedGame.id || (g._id && g._id === updatedGame._id)) ? updatedGame : g);
+        const next = prev.map(g => (String(g.id || g._id || '') === targetId) ? { ...g, ...updatedGame } : g);
         try { localStorage.setItem(STORAGE_KEYS.CACHED_GAMES, JSON.stringify(next)); } catch { }
         return next;
       });
-      setSelectedGame(prev => (prev && (prev.id === updatedGame.id || prev._id === updatedGame._id)) ? updatedGame : prev);
+      setSelectedGame(prev => (prev && String(prev.id || prev._id || '') === targetId) ? { ...prev, ...updatedGame } : prev);
     };
 
     const handleGameDeleted = (data) => {
+      const delId = String(typeof data === 'object' ? (data.id || data._id || '') : data || '');
+      if (!delId) return;
+
       setGames(prev => {
-        const next = prev.filter(g => g.id !== data.id && g._id !== data.id);
+        const next = prev.filter(g => String(g.id || g._id || '') !== delId);
         try { localStorage.setItem(STORAGE_KEYS.CACHED_GAMES, JSON.stringify(next)); } catch { }
         return next;
       });
-      setSelectedGame(prev => (prev && (prev.id === data.id || prev._id === data.id)) ? null : prev);
+      setSelectedGame(prev => (prev && String(prev.id || prev._id || '') === delId) ? null : prev);
     };
 
     const handleAllGamesDeleted = () => {
@@ -579,6 +616,32 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
+  const handleTagSearch = useCallback((query) => {
+    setSelectedGame(null);
+    setPendingGameId(null);
+    const q = (query || '').toLowerCase().trim();
+    const matched = categories.find(c => {
+      const cId = (c.id || c._id || '').toLowerCase().trim();
+      const cName = (c.name || '').toLowerCase().trim();
+      return cId === q || cName === q;
+    });
+
+    if (matched) {
+      setActiveCategory(matched.id || matched._id);
+      setSearchQuery('');
+      setActivePage('home');
+      const targetUrl = buildNavUrl(null, matched.id || matched._id, 'home', '');
+      window.history.pushState({ gameId: null, category: matched.id || matched._id, page: 'home' }, '', targetUrl);
+    } else {
+      setActiveCategory('');
+      setSearchQuery(query);
+      setActivePage('home');
+      const targetUrl = buildNavUrl(null, '', 'home', query);
+      window.history.pushState({ gameId: null, category: '', page: 'home' }, '', targetUrl);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [categories]);
+
   const displayedGames = useMemo(() => {
     let list = Array.isArray(games) ? [...games] : [];
 
@@ -595,17 +658,31 @@ function App() {
     }
 
     if (activeCategory) {
-      const catKey = activeCategory.toLowerCase();
+      const catKey = activeCategory.toLowerCase().trim();
       const is2p = catKey === 'multiplayer' || catKey === '2-player' || catKey === '2player';
+      const matchedCat = categories.find(cat => {
+        const cId = (cat.id || cat._id || '').toLowerCase().trim();
+        const cName = (cat.name || '').toLowerCase().trim();
+        return cId === catKey || cName === catKey;
+      });
+      const catName = (matchedCat?.name || '').toLowerCase().trim();
+
       list = list.filter(g => {
         if (!g) return false;
-        const c = (g.category || '').toLowerCase();
-        const tags = Array.isArray(g.tags) ? g.tags.map(t => (typeof t === 'string' ? t.toLowerCase() : '')) : [];
+        const c = (g.category || '').toLowerCase().trim();
+        const gTags = Array.isArray(g.tags)
+          ? g.tags.map(t => (typeof t === 'string' ? t.toLowerCase().trim() : ''))
+          : (typeof g.tags === 'string' ? g.tags.toLowerCase().split(',').map(t => t.trim()) : []);
+
         const matches2p = is2p && (
           c.includes('2') || c.includes('multiplayer') || c.includes('two') ||
-          tags.some(t => t.includes('2') || t.includes('multiplayer') || t.includes('two'))
+          gTags.some(t => t.includes('2') || t.includes('multiplayer') || t.includes('two'))
         );
-        return c === catKey || c.includes(catKey) || tags.some(t => t.includes(catKey)) || matches2p;
+
+        const matchesCat = c === catKey || (catName && c === catName) || (catKey.length > 3 && c.includes(catKey));
+        const matchesTag = gTags.some(t => t === catKey || (catName && t === catName) || (catKey.length > 3 && t.includes(catKey)));
+
+        return matchesCat || matchesTag || matches2p;
       });
     }
 
@@ -646,35 +723,46 @@ function App() {
         user={user}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
-        onOpenSidebar={() => setIsSidebarOpen(true)}
         favoritesCount={favorites.length}
         onOpenFavorites={() => setFavoritesDrawerOpen(true)}
         onNavigate={handleNavigation}
         onOpenMultiplayer={() => setMultiplayerOpen(true)}
         level={level}
+        activePage={activePage}
       />
 
       <div className="gamepix-body-layout">
 
-        <Sidebar
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
-          activePage={activePage}
-          activeCategory={activeCategory}
-          onNavigate={handleNavigation}
-          onSelectCategory={handleCategorySelect}
-          favoritesCount={favorites.length}
-          recentlyPlayedCount={recentlyPlayed.length}
-          onOpenFavorites={() => setFavoritesDrawerOpen(true)}
-          onRandomPlay={handleRandomPlay}
-          user={user}
-          onOpenAuth={() => setAuthModalOpen(true)}
-          categories={categories}
-          onOpenMultiplayer={() => setMultiplayerOpen(true)}
-        />
+        {/* Hide sidebar on static info pages */}
+        {!['about', 'privacy', 'terms', 'contact', 'disclaimer', 'developers', 'blog'].includes(activePage) && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            setIsOpen={setIsSidebarOpen}
+            isExpanded={isSidebarExpanded}
+            onMouseEnter={handleSidebarMouseEnter}
+            onMouseLeave={handleSidebarMouseLeave}
+            activePage={activePage}
+            activeCategory={activeCategory}
+            onNavigate={handleNavigation}
+            onSelectCategory={handleCategorySelect}
+            favoritesCount={favorites.length}
+            recentlyPlayedCount={recentlyPlayed.length}
+            onOpenFavorites={() => setFavoritesDrawerOpen(true)}
+            onRandomPlay={handleRandomPlay}
+            user={user}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            categories={availableCategories}
+            allGames={games}
+            onOpenMultiplayer={() => setMultiplayerOpen(true)}
+          />
+        )}
 
         {/* Right Main Content Area */}
-        <div className={`gamepix-main-wrapper ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+        <div className={`gamepix-main-wrapper ${
+          ['about', 'privacy', 'terms', 'contact', 'disclaimer', 'developers', 'blog'].includes(activePage)
+            ? 'sidebar-hidden'
+            : isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'
+        }`}>
           <main className="gamepix-main-content">
             {selectedGame ? (
               <GamePlayerView
@@ -703,22 +791,35 @@ function App() {
               <Suspense fallback={<div className="loading-spinner" />}>
                 <PrivacyPage onBackToHome={() => { setActivePage('home'); setActiveCategory(''); }} />
               </Suspense>
+            ) : activePage === 'terms' ? (
+              <Suspense fallback={<div className="loading-spinner" />}>
+                <TermsPage onBackToHome={() => { setActivePage('home'); setActiveCategory(''); }} />
+              </Suspense>
             ) : activePage === 'contact' ? (
               <Suspense fallback={<div className="loading-spinner" />}>
                 <ContactPage onBackToHome={() => { setActivePage('home'); setActiveCategory(''); }} />
               </Suspense>
+            ) : activePage === 'disclaimer' ? (
+              <Suspense fallback={<div className="loading-spinner" />}>
+                <DisclaimerPage onBackToHome={() => { setActivePage('home'); setActiveCategory(''); }} />
+              </Suspense>
+            ) : activePage === 'blog' ? (
+              <Suspense fallback={<div className="loading-spinner" />}>
+                <BlogPage onBackToHome={() => { setActivePage('home'); setActiveCategory(''); }} />
+              </Suspense>
             ) : (
               <GameGrid
                 title={
-                  activePage === 'trending' ? '🔥 Trending Now' :
-                    activePage === 'most-played' ? '🏆 Most Played Games' :
-                      activePage === 'top-rated' ? '⭐ Top Rated Games' :
-                        activePage === 'new' ? '✨ New Game Releases' :
-                          activePage === 'recently-played' ? '🕒 Recently Played' :
+                  activePage === 'trending' ? 'Trending Now' :
+                    activePage === 'most-played' ? 'Most Played Games' :
+                      activePage === 'top-rated' ? 'Top Rated Games' :
+                        activePage === 'new' ? 'New Game Releases' :
+                          activePage === 'recently-played' ? 'Recently Played' :
                             activeCategory ? `${activeCategory.toUpperCase()} GAMES` :
                               ''
                 }
                 games={displayedGames}
+                allGames={games}
                 activeGameCounts={activeGameCounts}
                 onPlayGame={handlePlayGame}
                 favorites={favorites}
@@ -735,10 +836,18 @@ function App() {
                   }
                 }}
                 user={user}
-                categories={categories}
+                categories={availableCategories}
               />
             )}
           </main>
+          <Footer
+            categories={availableCategories}
+            games={games}
+            onNavigate={handleNavigation}
+            onSelectCategory={handleCategorySelect}
+            onRandomPlay={handleRandomPlay}
+            onSearch={handleTagSearch}
+          />
         </div>
 
       </div>

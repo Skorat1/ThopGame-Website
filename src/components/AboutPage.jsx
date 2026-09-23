@@ -24,20 +24,20 @@ import { sounds } from '../utils/audio';
 
 const FAQ_ITEMS = [
   {
-    q: "IsThopGames really 100% free to play?",
-    a: "Yes! All games onThopGames are completely free to play directly in your web browser. There are zero paywalls, no subscriptions, and no hidden in-app purchases required to access any game in our catalog."
+    q: "Is ThopGames completely free to play?",
+    a: "Yes. All games on ThopGames are entirely free to play directly in your web browser. There are no paywalls, no subscription fees, and no hidden in-app purchases required to access any title in our catalog."
   },
   {
     q: "Do I need to download or install anything?",
-    a: "No downloads or installations are ever required. Every title runs instantly using modern HTML5, WebGL, and WebAssembly technologies inside standard web browsers like Chrome, Edge, Safari, and Firefox."
+    a: "No downloads or installations are required. Every title runs instantly using modern HTML5, WebGL, and WebAssembly technologies within standard web browsers including Chrome, Edge, Safari, and Firefox."
   },
   {
-    q: "Can independent game developers submit their games?",
-    a: "Absolutely! We love indie creators. You can submit your HTML5 or WebGL game via our Developer Portal. Our curation team tests and approves quality submissions to be featured for our global player base."
+    q: "Can independent developers submit their games?",
+    a: "Yes. We actively support independent creators. You may submit your HTML5 or WebGL game via our Developer Portal. Our editorial team reviews and approves quality submissions for inclusion in our global game library."
   },
   {
     q: "How are high scores and game progress saved?",
-    a: "Your game progress, high scores, favorite games list, and personal settings are securely saved in your browser's LocalStorage. They remain available each time you return on the same device."
+    a: "Your game progress, high scores, favorites, and personal preferences are stored securely in your browser's LocalStorage. This data persists across sessions on the same device and browser."
   }
 ];
 
@@ -63,16 +63,16 @@ export default function AboutPage({ onBackToHome }) {
           <div className="static-hero-icon-box">
             <Gamepad2 size={38} className="text-cyan" />
           </div>
-          <h1>Next-Gen <span className="neon-text-gradient">Browser Arcade</span></h1>
+          <h1>Premium <span className="neon-text-gradient">Browser Gaming</span></h1>
           <p className="static-hero-lead">
-            <strong>THOPGAME</strong> is an ultra-fast, high-octane gaming destination delivering hundreds of handpicked instant HTML5 & WebGL 3D games directly to your screen with 0 downloads and 60 FPS performance.
+            <strong>ThopGames</strong> is a high-performance, curated browser gaming platform delivering hundreds of handpicked HTML5 and WebGL titles — playable instantly at 60 FPS with no downloads, no installations, and no fees.
           </p>
 
           <div className="hero-chips-row">
-            <span className="hero-chip">⚡ 0ms Install Time</span>
-            <span className="hero-chip">🛡️ 100% Sandbox Secure</span>
-            <span className="hero-chip">🌍 Global Low-Latency CDN</span>
-            <span className="hero-chip">📱 Mobile & Desktop Ready</span>
+            <span className="hero-chip"><Zap size={14} className="text-amber" style={{ marginRight: '4px' }} /> Zero Installation Time</span>
+            <span className="hero-chip"><ShieldCheck size={14} className="text-emerald" style={{ marginRight: '4px' }} /> Sandbox Secured</span>
+            <span className="hero-chip"><Globe2 size={14} className="text-blue" style={{ marginRight: '4px' }} /> Global CDN Delivery</span>
+            <span className="hero-chip"><Smartphone size={14} className="text-purple" style={{ marginRight: '4px' }} /> All Devices Supported</span>
           </div>
         </div>
       </div>
@@ -111,8 +111,8 @@ export default function AboutPage({ onBackToHome }) {
 
       {/* Core Platform Pillars */}
       <div className="static-section-heading">
-        <h2>Why Gamers Love <span className="text-cyan">THOPGAME</span></h2>
-        <p>Engineered from the ground up for seamless browser-based gaming excellence.</p>
+        <h2>Why Professionals Choose <span className="text-cyan">ThopGames</span></h2>
+        <p>Built from the ground up to deliver seamless, high-fidelity browser gaming at scale.</p>
       </div>
 
       <div className="static-content-grid">
@@ -127,7 +127,7 @@ export default function AboutPage({ onBackToHome }) {
             </div>
           </div>
           <p>
-            Powered by modern cloud edge networks and optimized WebAssembly pipelines. Tap any game and start playing in less than a second without eating up device disk storage.
+            Powered by globally distributed edge networks and optimized WebAssembly delivery pipelines. Select any title and begin playing within seconds — without consuming local device storage or bandwidth.
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export default function AboutPage({ onBackToHome }) {
             </div>
           </div>
           <p>
-            Hardware-accelerated rendering delivers silky-smooth framerates, high-definition particles, dynamic lighting, and immersive spatial web audio on any graphics chipset.
+            Hardware-accelerated GPU rendering delivers consistent high framerates, precision particle effects, dynamic lighting environments, and immersive spatial audio on any compatible device.
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export default function AboutPage({ onBackToHome }) {
             </div>
           </div>
           <p>
-            Every submission is rigorously audited for security, family-friendliness, and malware prevention. Sandboxed permissions guarantee safe gameplay across all devices.
+            Every title undergoes rigorous security and content auditing prior to publication. Sandbox isolation enforces strict permissions, ensuring safe and age-appropriate gameplay across all platforms.
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default function AboutPage({ onBackToHome }) {
             </div>
           </div>
           <p>
-            We champion independent creators with streamlined catalog submission, real-time analytics, and instant exposure to hundreds of thousands of active gaming enthusiasts.
+            We support independent studios and solo developers with a streamlined submission process, real-time performance analytics, and direct access to a global audience of engaged players.
           </p>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function AboutPage({ onBackToHome }) {
       {/* Interactive FAQ Section */}
       <div className="static-section-heading" style={{ marginTop: '10px' }}>
         <h2>Frequently Asked <span className="text-purple">Questions</span></h2>
-        <p>Everything you need to know about playing and publishing onThopGames.</p>
+        <p>Common queries about accessing, playing, and publishing games on ThopGames.</p>
       </div>
 
       <div className="static-faq-container">
@@ -228,8 +228,8 @@ export default function AboutPage({ onBackToHome }) {
       {/* Bottom CTA Banner */}
       <div className="static-bottom-cta">
         <div className="cta-text">
-          <h3>Ready to Jump Into the Action?</h3>
-          <p>Browse over 500+ top rated arcade, multiplayer, driving, and puzzle games now.</p>
+          <h3>Ready to Start Playing?</h3>
+          <p>Explore our full library of 500+ curated arcade, multiplayer, racing, and puzzle titles.</p>
         </div>
         <button
           className="static-cta-btn"

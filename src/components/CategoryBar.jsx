@@ -1,39 +1,15 @@
-import React, { useRef } from 'react';
-import {
-  Gamepad2,
-  Flame,
-  Sparkles,
-  Brain,
-  Gauge,
-  Crosshair,
-  Trophy,
-  Users,
-  Coffee,
-  Heart,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import React, { useRef, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORIES } from '../data/games';
 import { sounds } from '../utils/audio';
-
-const ICON_MAP = {
-  Gamepad2,
-  Flame,
-  Sparkles,
-  Brain,
-  Gauge,
-  Crosshair,
-  Trophy,
-  Users,
-  Coffee,
-  Heart
-};
+import { renderCategorySvgIcon, getGameCountForCategory, getDimmedCategoryColor } from '../utils/categoryIcons';
 
 export default function CategoryBar({
   activeCategory = 'all',
   onSelectCategory,
   gameCounts = {},
-  categories = CATEGORIES
+  categories = CATEGORIES,
+  games = []
 }) {
   const scrollRef = useRef(null);
 
@@ -44,6 +20,19 @@ export default function CategoryBar({
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
+
+  // Only display categories that have active games (or 'all')
+  const visibleCategories = useMemo(() => {
+    return (categories || []).filter((cat) => {
+      if (cat.id === 'all' || cat.id === '' || (cat.name || '').toLowerCase() === 'all games') {
+        return true;
+      }
+      const count = (gameCounts && gameCounts[cat.id] !== undefined)
+        ? gameCounts[cat.id]
+        : getGameCountForCategory(cat, games);
+      return count > 0;
+    });
+  }, [categories, gameCounts, games]);
 
   return (
     <div className="category-bar-wrapper">
@@ -56,30 +45,37 @@ export default function CategoryBar({
       </button>
 
       <div className="category-scroll-container" ref={scrollRef}>
-        {categories.map((cat) => {
+        {visibleCategories.map((cat) => {
           const isActive = activeCategory === cat.id;
-          const count = gameCounts[cat.id] || 0;
-          const isEmoji = typeof cat.icon === 'string' && /\p{Emoji}/u.test(cat.icon);
-          const IconComp = ICON_MAP[cat.icon] || Gamepad2;
+          const count = (gameCounts && gameCounts[cat.id] !== undefined)
+            ? gameCounts[cat.id]
+            : getGameCountForCategory(cat, games);
+
+          const rawColor = cat.color || '#2563eb';
+          const catColor = getDimmedCategoryColor(rawColor);
 
           return (
             <button
               key={cat.id}
               className={`category-pill-btn ${isActive ? 'active' : ''}`}
               style={{
-                '--pill-color': cat.color || '#00f2fe'
+                '--pill-color': catColor,
+                ...(isActive ? {
+                  background: catColor,
+                  borderColor: catColor,
+                  boxShadow: `0 3px 12px ${catColor}35`,
+                  color: '#ffffff'
+                } : {
+                  borderColor: `${catColor}25`
+                })
               }}
               onClick={() => {
                 sounds.playClick();
                 onSelectCategory(cat.id);
               }}
             >
-              <span className="pill-icon-box">
-                {isEmoji ? (
-                  <span className="pill-emoji-icon" style={{ fontSize: '1rem', lineHeight: 1 }}>{cat.icon}</span>
-                ) : (
-                  <IconComp size={16} />
-                )}
+              <span className="pill-icon-box" style={{ color: isActive ? '#ffffff' : catColor }}>
+                {renderCategorySvgIcon(cat, 16)}
               </span>
               <span className="pill-title">{cat.name}</span>
               {count > 0 && <span className="pill-count">{count}</span>}
@@ -98,4 +94,3 @@ export default function CategoryBar({
     </div>
   );
 }
-

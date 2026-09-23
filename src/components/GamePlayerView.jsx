@@ -88,6 +88,15 @@ function SidebarGameTile({ game, onPlay, isFirst }) {
       onMouseLeave={handleMouseLeave}
       title={game.title}
     >
+      {/* Ambient Blurred Backdrop */}
+      <img
+        src={imgSrc}
+        alt=""
+        aria-hidden="true"
+        className="crazy-sidebar-backdrop"
+        onError={(e) => { e.target.style.display = 'none'; }}
+      />
+
       <img
         src={imgSrc}
         alt={game.title}
@@ -1003,7 +1012,6 @@ export default function GamePlayerView({
                   scrolling="no"
                   seamless="seamless"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; gamepad; cross-origin-isolated"
-                  allowFullScreen={true}
                   loading="eager"
                   referrerPolicy="no-referrer-when-downgrade"
                   onLoad={() => setIframeLoaded(true)}
@@ -1179,11 +1187,13 @@ export default function GamePlayerView({
           <div className="crazy-related-grid">
             {moreRelatedGames.map((relGame) => (
               <GameCard
-                key={`rel-${relGame.id}`}
+                key={`rel-${relGame.id || relGame._id}`}
                 game={relGame}
                 onPlay={onSelectRelatedGame}
                 isFavorite={isFavorite}
                 onToggleFavorite={onToggleFavorite}
+                forceSquare={true}
+                sizeVariant="1x1"
               />
             ))}
           </div>

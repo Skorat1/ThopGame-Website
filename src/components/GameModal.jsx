@@ -841,7 +841,6 @@ export default function GameModal({
                 scrolling="no"
                 seamless="seamless"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; gamepad; cross-origin-isolated"
-                allowFullScreen={true}
                 loading="eager"
                 referrerPolicy="no-referrer-when-downgrade"
                 style={{

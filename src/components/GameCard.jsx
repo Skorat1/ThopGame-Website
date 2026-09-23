@@ -57,10 +57,14 @@ const GameCard = memo(function GameCard({
   onToggleFavorite,
   sizeVariant = '1x1',
   priority = false,
-  livePlayersCount = 0
+  livePlayersCount = 0,
+  forceSquare = false
 }) {
-  if (!game) return null;
-  const targetWidth = sizeVariant === '2x2' ? 500 : 360;
+  const [autoVariant, setAutoVariant] = useState(null);
+  const explicitSize = (game?.tileSize && game.tileSize !== 'auto') ? String(game.tileSize).toLowerCase().trim() : null;
+  const effectiveVariant = forceSquare ? '1x1' : (explicitSize || autoVariant || (game?.featured ? '2x2' : sizeVariant));
+
+  const targetWidth = (effectiveVariant === '2x2' || effectiveVariant === '3x2' || effectiveVariant === '4x2') ? 500 : 360;
   const rawThumb = game?.thumbnail || game?.thumbnailUrl || game?.image || game?.imageUrl || game?.cover || game?.banner;
   const optimizedThumb = optimizeThumbUrl(rawThumb, targetWidth);
 
@@ -80,10 +84,38 @@ const GameCard = memo(function GameCard({
     // If the image was already cached in browser memory, show immediately
     if (imgRef.current?.complete && imgRef.current?.naturalWidth > 0) {
       setImgLoaded(true);
+      detectAspectVariant(imgRef.current);
     } else {
       setImgLoaded(false);
     }
   }, [rawThumb, targetWidth]);
+
+  const detectAspectVariant = (imgElement) => {
+    if (forceSquare) return;
+    if (!explicitSize && imgElement?.naturalWidth && imgElement?.naturalHeight) {
+      const ratio = imgElement.naturalWidth / imgElement.naturalHeight;
+      if (ratio >= 2.1) {
+        setAutoVariant('4x2');
+      } else if (ratio >= 1.55) {
+        setAutoVariant('2x1');
+      } else if (ratio >= 1.25) {
+        setAutoVariant('3x2');
+      } else if (ratio <= 0.65) {
+        setAutoVariant('1x2');
+      } else if (ratio <= 0.82) {
+        setAutoVariant('2x3');
+      } else if (game.featured) {
+        setAutoVariant('2x2');
+      } else {
+        setAutoVariant('1x1');
+      }
+    }
+  };
+
+  const handleImageLoad = (e) => {
+    setImgLoaded(true);
+    detectAspectVariant(e.target);
+  };
 
   const rawVideoUrl = getGamePreviewVideo(game);
   const videoSource = !videoError ? parseVideoSource(rawVideoUrl) : null;
@@ -95,9 +127,9 @@ const GameCard = memo(function GameCard({
         videoRef.current.currentTime = 0;
         const playPromise = videoRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {});
+          playPromise.catch(() => { });
         }
-      } catch {}
+      } catch { }
     }
   };
 
@@ -107,7 +139,7 @@ const GameCard = memo(function GameCard({
       videoRef.current.pause();
       try {
         videoRef.current.currentTime = 0;
-      } catch {}
+      } catch { }
     }
   };
 
@@ -116,9 +148,11 @@ const GameCard = memo(function GameCard({
     setImgLoaded(true);
   };
 
+  if (!game) return null;
+
   return (
     <div
-      className={`sky-game-card game-card poki-game-card poki-tile-${sizeVariant} ${isHovered ? 'is-card-hovered' : ''}`}
+      className={`sky-game-card game-card poki-game-card poki-tile-${effectiveVariant} ${isHovered ? 'is-card-hovered' : ''}`}
       onClick={() => {
         sounds.playClick();
         onPlay(game);
@@ -137,10 +171,10 @@ const GameCard = memo(function GameCard({
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           decoding="async"
-          onLoad={() => setImgLoaded(true)}
+          onLoad={handleImageLoad}
           onError={handleImageError}
-          style={{ 
-            opacity: imgLoaded ? 1 : 0.4, 
+          style={{
+            opacity: imgLoaded ? 1 : 0.4,
             transition: 'opacity 0.2s ease, transform 0.35s ease',
             display: 'block'
           }}

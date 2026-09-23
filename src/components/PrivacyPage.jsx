@@ -57,7 +57,9 @@ export default function PrivacyPage({ onBackToHome }) {
             Your privacy and digital safety are foundational to everything we build. We believe in complete transparency, zero invasive tracking, and giving you 100% control of your gameplay data.
           </p>
           <div className="policy-meta-date">
-            <span>🛡️ Updated for 2026 • Compliant with GDPR, CCPA & COPPA</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <ShieldCheck size={16} className="text-purple" /> Updated for 2026 • Compliant with GDPR, CCPA & COPPA
+            </span>
           </div>
         </div>
       </div>
@@ -162,19 +164,6 @@ export default function PrivacyPage({ onBackToHome }) {
             <p>
               We avoid intrusive third-party cross-site advertising trackers. We utilize HTML5 LocalStorage strictly on your device to remember which games you've marked as favorites and your recent plays.
             </p>
-            <div className="storage-action-box">
-              <div>
-                <strong>Manage Local Game Data:</strong>
-                <p>You can instantly wipe your local recent games history and stored preferences at any time.</p>
-              </div>
-              <button
-                className={`purge-storage-btn ${clearedStorage ? 'purged' : ''}`}
-                onClick={handleClearLocalStorage}
-              >
-                <Trash2 size={16} />
-                <span>{clearedStorage ? 'Local History Cleared!' : 'Clear My Local Game Data'}</span>
-              </button>
-            </div>
           </div>
         </div>
 

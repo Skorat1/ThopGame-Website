@@ -75,9 +75,9 @@ export default function Navbar({
             }}
           >
             <img
-              src="/thopgame-logo.png"
-              alt="ThopGame"
-              style={{ height: '42px', width: 'auto', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px 6px' }}
+              src="/thopgame-logo.svg"
+              alt="ThopGames"
+              style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
             />
           </a>
         </div>

@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Search, X, Gamepad2, Sparkles, Flame, Trophy, Volume2, VolumeX, Heart, User } from 'lucide-react';
 import { sounds } from '../utils/audio';
+import { filterCategoriesWithGames } from '../utils/categoryIcons';
 
 const SKY_CATEGORIES = [
   { id: 'all', label: 'ALL GAMES' },
@@ -40,6 +41,11 @@ export default function SkySearchBar({
       (g.category && g.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (g.tags && g.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())))
     ).slice(0, 6);
+
+  const visiblePills = useMemo(() => {
+    const pool = (categories && categories.length > 0) ? categories : SKY_CATEGORIES;
+    return filterCategoriesWithGames(pool, games);
+  }, [categories, games]);
 
   return (
     <div className="sky-search-hero-container">
@@ -143,7 +149,7 @@ export default function SkySearchBar({
 
       {/* Horizontal Scrolling Category Pills */}
       <div className="sky-category-pills-scroll">
-        {(categories && categories.length > 0 ? categories : SKY_CATEGORIES).map((cat) => {
+        {visiblePills.map((cat) => {
           const catId = cat.id || cat._id;
           const label = (cat.name || cat.label || catId || '').toUpperCase();
           const isActive = (activeCategory === catId) || (!activeCategory && catId === 'all');

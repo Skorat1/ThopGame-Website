@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Search, X, Gamepad2, Menu } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { socket } from '../utils/socket';
+import ThopLogo from './ThopLogo';
 
 const SkyNavbar = memo(function SkyNavbar({
   searchQuery,
@@ -15,18 +16,27 @@ const SkyNavbar = memo(function SkyNavbar({
   user,
   onToggleSidebar,
   onOpenSidebar,
+  onCloseSidebar,
   onOpenMultiplayer,
-  level = 1
+  level = 1,
+  activePage
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    socket.on('online:count', (data) => {
-      if (typeof data?.count === 'number') setOnlineCount(data.count);
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    socket.on('stats:online', (count) => {
+      setOnlineCount(count);
     });
     return () => {
-      socket.off('online:count');
+      socket.off('stats:online');
     };
   }, []);
 
@@ -41,43 +51,43 @@ const SkyNavbar = memo(function SkyNavbar({
   }, [searchQuery, games]);
 
   return (
-    <header className="sky-advanced-navbar">
+    <header className={`sky-advanced-navbar${isScrolled ? ' scrolled' : ''}`}>
       <div className="sky-navbar-wrapper">
         {/* Main Row: Sidebar Toggle + Brand Logo + Search Bar + Login/Profile */}
         <div className="sky-navbar-main-row">
 
           <div className="sky-navbar-left-group">
-            {/* 1. GamePix Sidebar Menu Toggle Button */}
-            <button
-              className="gamepix-menu-toggle-btn"
-              onClick={() => {
-                sounds.playClick();
-                if (onToggleSidebar) onToggleSidebar();
-              }}
-              title="Toggle sidebar menu"
-              aria-label="Toggle sidebar menu"
-            >
-              <Menu size={22} />
-            </button>
+            <div className="sky-brand-wrapper">
+              {/* 1. GamePix Sidebar Menu Toggle Button */}
+              {!['about', 'privacy', 'terms', 'contact', 'disclaimer', 'developers'].includes(activePage) && (
+                <button
+                  className="gamepix-menu-toggle-btn"
+                  onClick={() => {
+                    sounds.playClick();
+                    if (onToggleSidebar) onToggleSidebar();
+                  }}
+                  title="Toggle sidebar menu"
+                  aria-label="Toggle sidebar menu"
+                >
+                  <Menu size={22} />
+                </button>
+              )}
 
-            {/* 2. Standalone Advanced Brand Logo */}
-            <div
-              className="sky-standalone-logo"
-              onClick={() => {
-                sounds.playClick();
-                onSelectCategory('');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              title="ThopGame Arcade - Home"
-            >
-              <img
-                src="/thopgame-logo.png"
-                alt="ThopGames Logo"
-                className="sky-logo-badge-icon-img"
-              />
-              <div className="sky-logo-text-box">
-                <span className="sky-text-sky">Thop</span>
-                <span className="sky-text-games">Games</span>
+              {/* 2. Standalone Advanced Brand Logo */}
+              <div
+                className="sky-standalone-logo"
+                onClick={() => {
+                  sounds.playClick();
+                  onSelectCategory('');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                title="ThopGame Arcade - Home"
+              >
+                <ThopLogo variant="icon" size={38} className="sky-logo-badge-icon-img" />
+                <div className="sky-logo-text-box">
+                  <span className="sky-text-sky">Thop</span>
+                  <span className="sky-text-games">Games</span>
+                </div>
               </div>
             </div>
           </div>
